@@ -1,5 +1,5 @@
 import path from 'path'
-import { app, ipcMain } from 'electron'
+import { app, ipcMain ,Notification,Menu} from 'electron'
 import serve from 'electron-serve'
 import { createWindow } from './helpers'
 import {SerialPort} from 'serialport'
@@ -8,15 +8,21 @@ const isProd = process.env.NODE_ENV === 'production'
 let port;
 let dataBuffer = '';
 let mainWindow
+
+
 if (isProd) {
   serve({ directory: 'app' })
 } else {
   app.setPath('userData', `${app.getPath('userData')} (development)`)
 }
+const showNotification = (title, body) => {
+  new Notification({ title, body }).show();
+};
 
 ;(async () => {
   await app.whenReady()
-
+// Clear the default menu
+Menu.setApplicationMenu(null);
    mainWindow = createWindow('main', {
     width: 1000,
     height: 600,
@@ -72,6 +78,7 @@ ipcMain.handle("open-port", async (event,  config ) => {
           reject(err);
         } else {
           console.log(`Port ${path} opened at baud rate ${baudRate}`);
+          showNotification(`Port ${path} opened successfully`);
           resolve();
         }
       });
@@ -222,4 +229,7 @@ ipcMain.handle("clear-data", async (event, { data }) => {
       message: `Failed to complete operation: ${error.message}`,
     };
   }
+});
+ipcMain.on('trigger-notification', (event, { title, body }) => {
+  new Notification({ title, body }).show();
 });

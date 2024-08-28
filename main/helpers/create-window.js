@@ -1,4 +1,4 @@
-import { screen, BrowserWindow } from 'electron'
+import { screen, BrowserWindow,Notification  } from 'electron'
 import Store from 'electron-store'
 
 export const createWindow = (windowName, options) => {
@@ -73,6 +73,7 @@ export const createWindow = (windowName, options) => {
   })
 
   win.on('close', saveState)
+    
 
   return win
 }

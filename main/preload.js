@@ -31,6 +31,9 @@ const handler = {
   send(channel, ...args) {
     ipcRenderer.send(channel, ...args);
   },
+  triggerNotification(title, body) {
+    ipcRenderer.send('trigger-notification', { title, body });
+  },  
 };
 
 contextBridge.exposeInMainWorld('ipc', handler);

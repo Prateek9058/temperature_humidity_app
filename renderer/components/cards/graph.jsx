@@ -1,5 +1,5 @@
 import React from "react";
-import { Divider, Grid } from "@mui/material";
+import { Button, Divider, Grid } from "@mui/material";
 import { Line } from "react-chartjs-2";
 import { Chart, registerables } from "chart.js";
 
@@ -9,7 +9,7 @@ const Graph = ({ data }) => {
   const timeLabels = data?.map((item) => item?.t);
   const temperatureData = data?.map((item) => item?.Temp);
   const HumidityData = data?.map((item) => item?.Humi);
-
+// console.log("data",data)
   const chartData = {
     labels: timeLabels,
     datasets: [
@@ -68,6 +68,7 @@ const Graph = ({ data }) => {
 
   return (
     <Grid container mt={3} mb={3}>
+    
       <Line
         data={chartData}
         width={"400px"}

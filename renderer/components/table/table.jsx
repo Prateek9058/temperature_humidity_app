@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import {
   Grid,
   Typography,
-  Box,
   Button,
   Chip,
   Tooltip,
@@ -13,7 +12,7 @@ import CustomTable from "../customTable/index";
 import { RiFileExcel2Line } from "react-icons/ri";
 import Papa from "papaparse";
 import { saveAs } from "file-saver";
-
+import { ToastContainer,toast } from "react-toastify";
 const Table = ({
   data,
   params,
@@ -27,14 +26,7 @@ const Table = ({
   setSearchQuery,
   loading,
 }) => {
-  const columns = [
-    "Sr no.",
-    "Date",
-    "Time",
-    "Temperature(°C)",
-    "Humidity",
-   
-  ];
+  const columns = ["Sr no.", "Date", "Time", "Temperature(°C)", "Humidity"];
   const [open, setOpenDialog] = React.useState(false);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
 
@@ -65,23 +57,23 @@ const Table = ({
 
   const getFormattedData = (data) => {
     return data?.map((item, index) => ({
-      sr:index+1,
-      date: item.d?`${item.d}`:"--",
-     time:item?.t?item?.t:"--",
-     Temp:item?.Temp?`${item.Temp} °C`:'--',
-     Humi:item?.Humi?`${item.Humi} %`:'--',
+      sr: index + 1,
+      date: item.d ? `${item.d}` : "--",
+      time: item?.t ? item?.t : "--",
+      Temp: item?.Temp ? `${item.Temp} °C` : "--",
+      Humi: item?.Humi ? `${item.Humi} %` : "--",
     }));
   };
   const handleExport = (data) => {
     console.log("Exporting data", data);
 
     if (!Array.isArray(data) || data.length === 0) {
-      alert("No data available to export");
+      toast.error("No data available to export");
       return;
     }
 
-    const modifiedData = data?.map((row,index) => ({
-      srNo: index+1,
+    const modifiedData = data?.map((row, index) => ({
+      srNo: index + 1,
       date: row?.d,
       time: row?.t,
       temperature: `${row?.Temp} C`,
@@ -89,17 +81,11 @@ const Table = ({
     }));
 
     const csvData = [];
-    const tableHeading = "Read History Data";
+    const tableHeading = "Temeperature & HUmidity History Data";
     csvData.push([[], [], tableHeading, [], []]);
     csvData.push([]);
 
-    const headerRow = [
-      "Sr no.",
-      "Date",
-      "Time",
-      "Temperature(°C)",
-      "Humidity",
-    ];
+    const headerRow = ["Sr no.", "Date", "Time", "Temperature(°C)", "Humidity"];
     csvData.push(headerRow);
 
     modifiedData.forEach((row) => {
@@ -108,14 +94,14 @@ const Table = ({
         row?.time,
         row?.date,
         row?.temperature,
-       row?.humidity ,
+        row?.humidity,
       ];
       csvData.push(rowData);
     });
     const csvString = Papa.unparse(csvData);
     const blob = new Blob([csvString], { type: "text/csv;charset=utf-8" });
-    saveAs(blob, "ReadHistory.csv");
-    // notifySuccess("Download Excel Succefully")
+    saveAs(blob, "TemperatureHumidityHistory.csv");
+    toast.success("Download Excel Succefully")
   };
   return (
     <Grid container mt={2}>
@@ -126,7 +112,7 @@ const Table = ({
         p={2}
         sx={{
           borderRadius: "16px 16px 0px 0px",
-          backgroundColor:"#fff"
+          backgroundColor: "#fff",
         }}
       >
         <Grid item>
@@ -135,42 +121,56 @@ const Table = ({
         <Grid item className="customSearch">
           <Grid container>
             <Grid item mr={3}>
-            <Button variant="outlined"  startIcon={<RiFileExcel2Line />} sx={{color:"black"}} onClick={()=>{handleExport(data)}}>
-           Download Excel
-          </Button>
             </Grid>
-            <Grid item >
-            <Button variant="contained"   onClick={(e)=>{ReadHistory("HIST_COMM\n\r")}}>
-            Read history
-          </Button>
+            <Grid item mr={3}>
+              <Button
+                variant="outlined"
+                startIcon={<RiFileExcel2Line />}
+                sx={{ color: "black" }}
+                onClick={() => {
+                  handleExport(data);
+                }}
+              >
+                Download Excel
+              </Button>
             </Grid>
-            <Grid item >
-            <Button variant="contained" color="error" sx={{ ml: 3 }} onClick={(e)=>{ClearHistory("CLEAR_SDCARD\n\r")}}>
-            Clear history
-          </Button>
+
+            <Grid item>
+              <Button
+                variant="contained"
+                onClick={(e) => {
+                  ReadHistory("HIST_COMM\n\r");
+                }}
+              >
+                Read history
+              </Button>
             </Grid>
-    
+            <Grid item>
+              <Button
+                variant="contained"
+                color="error"
+                sx={{ ml: 3 }}
+                onClick={(e) => {
+                  ClearHistory("CLEAR_SDCARD\n\r");
+                }}
+              >
+                Clear history
+              </Button>
+            </Grid>
           </Grid>
         </Grid>
       </Grid>
-      {loading ? (
-        <Typography>jfsd</Typography>
-        // <TableSkeleton
-        //   rowNumber={new Array(10).fill(0)}
-        //   tableCell={new Array(5).fill("15%")}
-        //   actions={new Array(2).fill(0)}
-        // />
-      ) : (
-        <CustomTable
-          page={page}
-          rows={getFormattedData(data)}
-          count={data?.length}
-          columns={columns}
-          setPage={setPage}
-          rowsPerPage={rowsPerPage}
-          setRowsPerPage={setRowsPerPage}
-        />
-      )}
+
+      <CustomTable
+        loading={loading}
+        page={page}
+        rows={getFormattedData(data)}
+        count={data?.length}
+        columns={columns}
+        setPage={setPage}
+        rowsPerPage={rowsPerPage}
+        setRowsPerPage={setRowsPerPage}
+      />
     </Grid>
   );
 };

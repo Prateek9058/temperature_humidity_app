@@ -14,6 +14,7 @@ import {
   Box,
   Grid,
   Typography,
+  CircularProgress,
 } from "@mui/material";
 
 const index = ({
@@ -105,8 +106,10 @@ console.log("rows",rows?.length)
           ))}
         </TableBody>
         <TableFooter>
-          {!loading && rows?.length === 0 && (
+          {!loading && rows?.length <=0 && (
+           
             <TableRow>
+              { console.log("loading in 0",loading)}
               <TableCell colSpan={columns.length}>
                 <Box
                   sx={{
@@ -122,12 +125,35 @@ console.log("rows",rows?.length)
                     justifyContent="center"
                     alignItems="center"
                   >
-                    <Image src={NOdata} alt="nodata"  height={500} width={500}/>
+                  <Image src={NOdata} alt="nodata"  height={500} width={500}/>
                   </Grid>
                 </Box>
               </TableCell>
             </TableRow>
           )}
+          {loading===true &&          <TableRow>
+          <TableCell colSpan={columns.length}>
+            {console.log("loading",loading,rows.length)}
+            {}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                minHeight: 200, 
+              }}
+            >
+              <Grid
+                container
+                direction="column"
+                justifyContent="center"
+                alignItems="center"
+              >
+              <CircularProgress/>
+              </Grid>
+            </Box>
+          </TableCell>
+        </TableRow>}
           {/* <TableRow>
             <TablePagination 
               page={page}

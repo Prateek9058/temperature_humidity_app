@@ -1,37 +1,89 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
-import { Avatar } from "@mui/material";
+import { Avatar, Button } from "@mui/material";
 import Graph from "./graph";
 import Image from "next/image";
-import Thermometer from '../../public/images/thermometer1.svg'
-import Battery from '../../public/images/battery1.svg'
-import Humidity from '../../public/images/humidity1.svg'
+import Thermometer from "../../public/images/thermometer1.svg";
+import Battery from "../../public/images/battery1.svg";
+import Humidity from "../../public/images/humidity1.svg";
+import CommanDatePicker from "../Date-range-Picker/index";
+import moment from "moment";
+import dayjs from "dayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-const CardList = ({ data,readSDcard }) => {
+const CardList = ({ data1, readSDcard }) => {
+  const [date, setDate] = useState(null);
+  const [filteredData, setFilteredData] = useState([]);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+
+  const currentDate = dayjs();
+  useEffect(() => {
+    const parseDate = (dateString) => {
+      try {
+        if (!dateString) {
+          throw new Error("Invalid date string");
+        }
+        const [day, month, year] = dateString.split("/").map(Number);
+        if (!day || !month || !year) {
+          throw new Error("Incomplete date information");
+        }
+        return new Date(year, month - 1, day);
+      } catch (error) {
+        console.error("Error parsing date:", error.message);
+        return null; // Return null to handle the error gracefully
+      }
+    };
+
+    // Format the startDate to 'D/M/YYYY'
+    const selectStartDate = dayjs(startDate).format("D/M/YYYY");
+    console.log("Formatted Start Date:", selectStartDate);
+
+    if (selectStartDate && readSDcard?.length) {
+      const filteredData = readSDcard.filter((item) => {
+        const itemDate = dayjs(parseDate(item.d)).format("D/M/YYYY");
+        return itemDate === selectStartDate;
+      });
+      console.log("Filtered Data:", filteredData);
+      setFilteredData(filteredData);
+    } else {
+      setFilteredData([]);
+    }
+  }, [startDate, readSDcard]);
+
   const cardData = [
     {
       id: 1,
       title: "Current temperature",
-      value: `${data?.Temp} °C`,
+      value: `${data1?.Temp || 0} °C`,
       icon: Thermometer,
     },
     {
       id: 2,
       title: "Current humidity",
-      value: `${data?.Humi} %`,
+      value: `${data1?.Humi || 0} %`,
       icon: Humidity,
     },
     {
       id: 3,
       title: "Battery",
-      value: `${data?.batt} %`,
+      value: `${data1?.batt || 0} %`,
       icon: Battery,
     },
   ];
-
+  const handleData = (data, datatype) => {
+    if (datatype == "startDate") {
+      setStartDate(data);
+    } else if (datatype == "endDate") {
+      setEndDate(data);
+    }
+  };
+  console.log("date", dayjs(startDate).format("D/M/YYYY"));
   return (
     <Grid container spacing={2} padding={1} mt={1}>
       <Grid item xs={12} md={4}>
@@ -60,7 +112,7 @@ const CardList = ({ data,readSDcard }) => {
                     <Grid item xs>
                       <Typography variant="h6">{data?.title}</Typography>
                       <Typography variant="body1" mt={1}>
-                        {data?.value?data?.value:"--"}
+                        {data?.value ? data?.value : "--"}
                       </Typography>
                     </Grid>
                   </Grid>
@@ -71,17 +123,42 @@ const CardList = ({ data,readSDcard }) => {
         </Grid>
       </Grid>
 
-      {/* Graph Section */}
       <Grid item xs={12} md={8}>
         <Grid
           container
           sx={{ backgroundColor: "#fff", borderRadius: "15px" }}
           p={0.5}
           height={"400px"}
+          justifyContent={"flex-end"}
         >
-          <Graph data={readSDcard}/>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              // label="Select Date"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{
+                disableUnderline: true,
+              }}
+              format="DD/MM/YYYY"
+              maxDate={currentDate}
+              value={startDate ? startDate : currentDate}
+              onChange={(e) => handleData(e, "startDate")}
+              renderInput={(params) => (
+                <TextField
+                  sx={{ maxWidth: "150px" }}
+                  variant="filled"
+                  size="small"
+                  {...params}
+                  inputProps={{
+                    ...params.inputProps,
+                    placeholder: "Start date",
+                  }}
+                />
+              )}
+            />
+          </LocalizationProvider>
+          <Graph data={filteredData} />
         </Grid>
-      </Grid>
+      </Grid> 
     </Grid>
   );
 };

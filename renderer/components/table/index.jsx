@@ -4,9 +4,9 @@ import React, { useEffect, useState } from "react";
 import Table from "./table";
 import { useSearchParams } from "next/navigation";
 
-const Page = ({ReadHistory,readSDcard,ClearHistory}) => {
+const Page = ({ReadHistory,readSDcard,ClearHistory,loading}) => {
   const [page, setPage] = React.useState(0);
-  const [loading, setLoading] = useState(false);
+
   const [rowsPerPage, setRowsPerPage] = React.useState(25);
   const [searchQuery, setSearchQuery] = useState("");
   const [date, setDate] = useState(null);
