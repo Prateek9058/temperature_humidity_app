@@ -304,7 +304,7 @@ const Index = () => {
           </Button> */}
         </Grid>
 
-        <CardContent data1={serialData} readSDcard={readSDcard} />
+        <CardContent data1={serialData} readSDcard={readSDcard} serialData={serialData} />
         <CustomTableContent
           ReadHistory={ReadHistory}
           readSDcard={readSDcard}

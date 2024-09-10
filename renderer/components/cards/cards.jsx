@@ -3,8 +3,16 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
-import { Avatar, Button } from "@mui/material";
+import {
+  Avatar,
+  Button,
+  FormControl,
+  Select,
+  InputLabel,
+  MenuItem,
+} from "@mui/material";
 import Graph from "./graph";
+import GraphSDCard from "./SdCardGraph";
 import Image from "next/image";
 import Thermometer from "../../public/images/thermometer1.svg";
 import Battery from "../../public/images/battery1.svg";
@@ -16,11 +24,12 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-const CardList = ({ data1, readSDcard }) => {
+const CardList = ({ data1, readSDcard, serialData }) => {
   const [date, setDate] = useState(null);
   const [filteredData, setFilteredData] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [selectedDataSource, setSelectedDataSource] = useState("live"); 
 
   const currentDate = dayjs();
   useEffect(() => {
@@ -76,12 +85,17 @@ const CardList = ({ data1, readSDcard }) => {
       icon: Battery,
     },
   ];
+  const minDate = dayjs("2024-01-01");
   const handleData = (data, datatype) => {
     if (datatype == "startDate") {
       setStartDate(data);
     } else if (datatype == "endDate") {
       setEndDate(data);
     }
+  };
+
+  const handleChangeDataSource = (event) => {
+    setSelectedDataSource(event.target.value);
   };
   console.log("date", dayjs(startDate).format("D/M/YYYY"));
   return (
@@ -131,34 +145,50 @@ const CardList = ({ data1, readSDcard }) => {
           height={"400px"}
           justifyContent={"flex-end"}
         >
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker
-              // label="Select Date"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                disableUnderline: true,
-              }}
-              format="DD/MM/YYYY"
-              maxDate={currentDate}
-              value={startDate ? startDate : currentDate}
-              onChange={(e) => handleData(e, "startDate")}
-              renderInput={(params) => (
-                <TextField
-                  sx={{ maxWidth: "150px" }}
-                  variant="filled"
-                  size="small"
-                  {...params}
-                  inputProps={{
-                    ...params.inputProps,
-                    placeholder: "Start date",
-                  }}
-                />
-              )}
-            />
-          </LocalizationProvider>
-          <Graph data={filteredData} />
+          <Grid container justifyContent={"flex-end"} p={1}>
+          <FormControl sx={{ mr: 1, minWidth: 200 }}>
+              <InputLabel id="data-source-select-label">Select Data Source</InputLabel>
+              <Select
+                label="Select Data Source"
+                value={selectedDataSource}
+                onChange={handleChangeDataSource}
+              >
+                <MenuItem value="live">Live Data</MenuItem>
+                <MenuItem value="readHistory">Read History</MenuItem>
+              </Select>
+            </FormControl>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                // label="Select Date"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  disableUnderline: true,
+                }}
+                format="DD/MM/YYYY"
+                maxDate={currentDate}
+                minDate={minDate}
+                value={startDate ? startDate : currentDate}
+                onChange={(e) => handleData(e, "startDate")}
+                renderInput={(params) => (
+                  <TextField
+                    sx={{ maxWidth: "150px" }}
+                    variant="filled"
+                    size="small"
+                    {...params}
+                    inputProps={{
+                      ...params.inputProps,
+                      placeholder: "Start date",
+                    }}
+                  />
+                )}
+              />
+            </LocalizationProvider>
+          </Grid>
+
+          {selectedDataSource=='live'?<Graph serialData={serialData} />:<GraphSDCard data={filteredData} />}
+          {/* > */}
         </Grid>
-      </Grid> 
+      </Grid>
     </Grid>
   );
 };
