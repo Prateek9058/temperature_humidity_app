@@ -57,6 +57,7 @@ const Graph = ({ serialData }) => {
           };
         });
 
+        // Shift the buffers to remove the processed data
         tempDataBuffer.current.shift();
         humiDataBuffer.current.shift();
         labelsBuffer.current.shift();
@@ -98,10 +99,13 @@ const Graph = ({ serialData }) => {
 
   useEffect(() => {
     if (serialData) {
+      // Add the current time for the label
+      const currentTime = new Date().toLocaleTimeString(); // Capturing current time as label
       tempDataBuffer.current.push(serialData.Temp);
       humiDataBuffer.current.push(serialData.Humi);
-      labelsBuffer.current.push(serialData.t);
+      labelsBuffer.current.push(currentTime); // Use the current time as the label
 
+      // Ensure that buffers do not grow beyond a limit
       if (tempDataBuffer.current.length > 1200) tempDataBuffer.current.shift();
       if (humiDataBuffer.current.length > 1200) humiDataBuffer.current.shift();
       if (labelsBuffer.current.length > 1200) labelsBuffer.current.shift();
@@ -115,7 +119,7 @@ const Graph = ({ serialData }) => {
       y: {
         beginAtZero: true,
         ticks: {
-          stepSize: 1,
+          stepSize: 0.1,
         },
       },
       x: {

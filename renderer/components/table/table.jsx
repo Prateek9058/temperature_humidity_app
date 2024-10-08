@@ -12,7 +12,10 @@ import CustomTable from "../customTable/index";
 import { RiFileExcel2Line } from "react-icons/ri";
 import Papa from "papaparse";
 import { saveAs } from "file-saver";
-import { ToastContainer,toast } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
+import CommonDialog from "../Dialog/index";
+import moment from "moment";
+import dayjs from "dayjs";
 const Table = ({
   data,
   params,
@@ -25,11 +28,20 @@ const Table = ({
   searchQuery,
   setSearchQuery,
   loading,
+  ports,
 }) => {
   const columns = ["Sr no.", "Date", "Time", "Temperature(°C)", "Humidity"];
   const [open, setOpenDialog] = React.useState(false);
+  const [openDownload, setOpneDownload] = React.useState(false);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
-
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+  const count = data?.length;
   useEffect(() => {
     const handler = setTimeout(() => {
       setSearchQuery(debouncedSearchQuery);
@@ -46,22 +58,63 @@ const Table = ({
   const handleOpenDialog = () => {
     setOpenDialog(true);
   };
+  const handleOpenDownload = () => {
+    setOpneDownload(true);
+  };
 
   const handleConfirm = () => {
+    if (ports.length === 0) {
+      toast.error("Port is not connected");
+      handleCancel();
+      return;
+    }
+    ClearHistory("CLEAR_SDCARD\n\r");
+    handleCancel();
+  };
+  const handleDownload = () => {
+    if (ports.length === 0) {
+      toast.error("Port is not connected");
+      handleCancel();
+      return;
+    }
+    ReadHistory("HIST_COMM\n\r");
     handleCancel();
   };
 
   const handleCancel = () => {
     setOpenDialog(false);
+    setOpneDownload(false);
   };
+  const renderPowerStatus = (status) => (
+    <Chip
+      label={status}
+      sx={{
+        backgroundColor: "#2D9CDB",
+        color: "#fff",
+        fontWeight: 700,
+        minWidth: 120,
+      }}
+    />
+  );
+  const renderPowerStatus1 = (status) => (
+    <Chip
+      label={status}
+      sx={{
+        backgroundColor: "#FFBFBF",
+        color: "red",
+        fontWeight: 700,
+        minWidth: 120,
+      }}
+    />
+  );
 
   const getFormattedData = (data) => {
     return data?.map((item, index) => ({
       sr: index + 1,
-      date: item.d ? `${item.d}` : "--",
-      time: item?.t ? item?.t : "--",
-      Temp: item?.Temp ? `${item.Temp} °C` : "--",
-      Humi: item?.Humi ? `${item.Humi} %` : "--",
+      date: item.d ? item.d : "--",
+      time: item?.t ? dayjs(item.t, "HH:mm:ss").format("LTS") : "--",
+      Temp: item?.Temp ? renderPowerStatus(`${item.Temp} °C`) : "--",
+      Humi: item?.Humi ? renderPowerStatus1(`${item.Humi} %`) : "--",
     }));
   };
   const handleExport = (data) => {
@@ -75,8 +128,8 @@ const Table = ({
     const modifiedData = data?.map((row, index) => ({
       srNo: index + 1,
       date: row?.d,
-      time: row?.t,
-      temperature: `${row?.Temp} C`,
+      time: dayjs(row?.t, "HH:mm:ss").format("LTS"),
+      temperature: `${row?.Temp} °C`,
       humidity: `${row?.Humi} %`,
     }));
 
@@ -91,8 +144,8 @@ const Table = ({
     modifiedData.forEach((row) => {
       const rowData = [
         row?.srNo,
-        row?.time,
         row?.date,
+        dayjs(row?.time, "HH:mm:ss").format("LTS"),
         row?.temperature,
         row?.humidity,
       ];
@@ -101,10 +154,32 @@ const Table = ({
     const csvString = Papa.unparse(csvData);
     const blob = new Blob([csvString], { type: "text/csv;charset=utf-8" });
     saveAs(blob, "TemperatureHumidityHistory.csv");
-    toast.success("Download Excel Succefully")
+    toast.success("Download Excel Succefully");
   };
   return (
-    <Grid container mt={2}>
+    <Grid container mt={1}>
+      <CommonDialog
+        open={open}
+        bgcolor={"red"}
+        fullWidth={true}
+        maxWidth={"xs"}
+        title="Confirmation"
+        message="Are you sure you want to clear this history?"
+        color="error"
+        onClose={handleCancel}
+        onConfirm={handleConfirm}
+      />
+      <CommonDialog
+        bgcolor={"green"}
+        open={openDownload}
+        fullWidth={true}
+        maxWidth={"xs"}
+        title="Confirmation"
+        message="Are you sure you want to read this history?"
+        color="success"
+        onClose={handleCancel}
+        onConfirm={handleDownload}
+      />
       <Grid
         container
         justifyContent="space-between"
@@ -116,13 +191,13 @@ const Table = ({
         }}
       >
         <Grid item>
-          <Typography variant="h5">Temerature and humidity history </Typography>
+          <Typography variant="h5">
+            Temperature and Humidity history{" "}
+          </Typography>
         </Grid>
         <Grid item className="customSearch">
-          <Grid container>
-            <Grid item mr={3}>
-            </Grid>
-            <Grid item mr={3}>
+          <Grid container spacing={2}>
+            <Grid item>
               <Button
                 variant="outlined"
                 startIcon={<RiFileExcel2Line />}
@@ -136,12 +211,7 @@ const Table = ({
             </Grid>
 
             <Grid item>
-              <Button
-                variant="contained"
-                onClick={(e) => {
-                  ReadHistory("HIST_COMM\n\r");
-                }}
-              >
+              <Button variant="contained" onClick={handleOpenDownload}>
                 Read history
               </Button>
             </Grid>
@@ -149,10 +219,7 @@ const Table = ({
               <Button
                 variant="contained"
                 color="error"
-                sx={{ ml: 3 }}
-                onClick={(e) => {
-                  ClearHistory("CLEAR_SDCARD\n\r");
-                }}
+                onClick={handleOpenDialog}
               >
                 Clear history
               </Button>
@@ -165,11 +232,13 @@ const Table = ({
         loading={loading}
         page={page}
         rows={getFormattedData(data)}
-        count={data?.length}
+        count={count}
         columns={columns}
         setPage={setPage}
         rowsPerPage={rowsPerPage}
+        handleChangePage={handleChangePage}
         setRowsPerPage={setRowsPerPage}
+        handleChangeRowsPerPage={handleChangeRowsPerPage}
       />
     </Grid>
   );

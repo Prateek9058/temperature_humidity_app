@@ -1,7 +1,7 @@
 "use client";
 import { createTheme } from "@mui/material/styles";
 import { Poppins } from "next/font/google";
-import theme from '../theme'
+import theme from "../theme";
 
 export const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700"],
@@ -141,7 +141,7 @@ const baselightTheme = createTheme({
         root: {
           boxShadow: "none",
           borderRadius: "7px",
-          color:"#fff"
+          color: "#fff",
         },
       },
     },
@@ -195,7 +195,7 @@ const baselightTheme = createTheme({
     MuiTableCell: {
       styleOverrides: {
         root: {
-          backgroundColor:"",
+          backgroundColor: "",
           borderBottom: `1px solid #e5eaef`,
         },
       },
@@ -203,7 +203,7 @@ const baselightTheme = createTheme({
     MuiTableRow: {
       styleOverrides: {
         root: {
-          backgroundColor:"#fff",
+          backgroundColor: "#fff",
           "&:last-child td": {
             borderBottom: 0,
           },
@@ -234,6 +234,9 @@ const baselightTheme = createTheme({
           },
           "&:hover .MuiOutlinedInput-notchedOutline": {
             borderColor: theme.palette.grey[300],
+          },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#000",
           },
         },
         input: {
@@ -283,10 +286,10 @@ const baselightTheme = createTheme({
           borderColor: theme.palette.warning.main,
           color: theme.palette.warning.main,
         },
-        outlinedError: {
-          borderColor: theme.palette.error.main,
-          color: theme.palette.error.main,
-        },
+        // outlinedError: {
+        //   borderColor: theme.palette.error.main,
+        //   color: theme.palette.error.main,
+        // },
         outlinedInfo: {
           borderColor: theme.palette.info.main,
           color: theme.palette.info.main,
@@ -296,4 +299,4 @@ const baselightTheme = createTheme({
   },
 });
 
-export  {baselightTheme} ;
+export { baselightTheme };

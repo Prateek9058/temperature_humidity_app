@@ -1,52 +1,94 @@
-import path from 'path'
-import { app, ipcMain ,Notification,Menu} from 'electron'
-import serve from 'electron-serve'
-import { createWindow } from './helpers'
-import {SerialPort} from 'serialport'
+import path from "path";
+import { app, ipcMain, Notification, Menu, dialog, shell } from "electron";
+import serve from "electron-serve";
+import { createWindow } from "./helpers";
+import { SerialPort } from "serialport";
+import fs from "fs";
+import Store from "electron-store";
 
-const isProd = process.env.NODE_ENV === 'production'
+const isProd = process.env.NODE_ENV === "production";
 let port;
-let dataBuffer = '';
-let mainWindow
-
+let dataBuffer = "";
+let mainWindow;
+const store = new Store();
 
 if (isProd) {
-  serve({ directory: 'app' })
+  serve({ directory: "app" });
 } else {
-  app.setPath('userData', `${app.getPath('userData')} (development)`)
+  app.setPath("userData", `${app.getPath("userData")} (development)`);
 }
 const showNotification = (title, body) => {
   new Notification({ title, body }).show();
 };
-
-;(async () => {
-  await app.whenReady()
 // Clear the default menu
 Menu.setApplicationMenu(null);
-   mainWindow = createWindow('main', {
-    width: 1000,
-    height: 600,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-    },
-  })
+const driverFilePath = "C:\\WINDOWS\\System32\\Drivers\\CH341S64.SYS";
 
-  if (isProd) {
-    await mainWindow.loadURL('app://./home')
-  } else {
-    const port = process.argv[2]
-    await mainWindow.loadURL(`http://localhost:${port}/home`)
-    mainWindow.webContents.openDevTools()
+const isDriverInstalled = () => {
+  try {
+    return fs.existsSync(driverFilePath);
+  } catch (err) {
+    console.error("Error checking driver installation:", err);
+    return false;
   }
-})()
+};
 
-app.on('window-all-closed', () => {
-  app.quit()
-})
+(async () => {
+  await app.whenReady();
 
-ipcMain.on('message', async (event, arg) => {
-  event.reply('message', `${arg} World!`)
-})
+  // Check if the 'isDriverInstalled' flag is stored
+  const driverInstalledFlag = store.get("isDriverInstalled");
+
+  // If the flag is not set and the driver is not installed, show the dialog
+  if (!driverInstalledFlag && !isDriverInstalled()) {
+    const result = await dialog.showMessageBox({
+      type: "info",
+      buttons: ["OK", "Cancel"],
+      title: "Driver Installation Required",
+      message:
+        "First you have to install CH34X driver, then restart the app to continue.",
+    });
+
+    if (result.response === 0) {
+      // OK button is pressed, open the driver's download page
+      const driverDownloadURL = "https://sparks.gogo.co.nz/ch340.html";
+      shell.openExternal(driverDownloadURL);
+
+      // Wait for the user to install the driver and close the app
+      app.quit();
+    } else {
+      // If user presses 'Cancel', quit the app
+      app.quit();
+      return;
+    }
+  } else {
+    // If driver is installed or the flag is set, create and load the main window
+    mainWindow = createWindow("main", {
+      width: 1000,
+      height: 600,
+      webPreferences: {
+        preload: path.join(__dirname, "preload.js"),
+      },
+    });
+
+    if (isProd) {
+      await mainWindow.loadURL("app://./home");
+    } else {
+      const port = process.argv[2];
+      await mainWindow.loadURL(`http://localhost:${port}/home`);
+      mainWindow.webContents.openDevTools();
+    }
+  }
+})();
+
+console.log("Is driver installed:", isDriverInstalled());
+app.on("window-all-closed", () => {
+  app.quit();
+});
+
+ipcMain.on("message", async (event, arg) => {
+  event.reply("message", `${arg} World!`);
+});
 ipcMain.handle("list-ports", async () => {
   try {
     const ports = await SerialPort.list();
@@ -57,9 +99,9 @@ ipcMain.handle("list-ports", async () => {
     return { error: error.message };
   }
 });
-ipcMain.handle("open-port", async (event,  config ) => {
-  const{path,baudRate}=config
-  console.log("path0",path)
+ipcMain.handle("open-port", async (event, config) => {
+  const { path, baudRate } = config;
+  console.log("path0", path);
   try {
     port = new SerialPort({
       path,
@@ -175,15 +217,14 @@ ipcMain.handle("read-data", async (event, { data }) => {
       const onData = (incomingData) => {
         responseBuffer += incomingData.toString();
         console.log("Received data:", responseBuffer);
-        if (responseBuffer.includes("stop")) { 
-          port.off("data", onData); 
+        if (responseBuffer.includes("stop")) {
+          port.off("data", onData);
           resolve({ success: true, message: responseBuffer.trim() });
         }
       };
       mainWindow.webContents.send("Read-SD-data", responseBuffer);
       port.on("data", onData);
     });
-
   } catch (error) {
     console.error("Error during serial communication:", error);
     return {
@@ -214,14 +255,13 @@ ipcMain.handle("clear-data", async (event, { data }) => {
       const onData1 = (incomingData) => {
         responseBuffer1 += incomingData.toString();
         console.log("Received data:", responseBuffer1);
-        if (responseBuffer1.includes("Cleared")) { 
-          port.off("data", onData1); 
+        if (responseBuffer1.includes("Cleared")) {
+          port.off("data", onData1);
           resolve({ success: true, message: responseBuffer1.trim() });
         }
       };
       port.on("data", onData1);
     });
-
   } catch (error) {
     console.error("Error during serial communication:", error);
     return {
@@ -230,6 +270,11 @@ ipcMain.handle("clear-data", async (event, { data }) => {
     };
   }
 });
-ipcMain.on('trigger-notification', (event, { title, body }) => {
+ipcMain.on("trigger-notification", (event, { title, body }) => {
   new Notification({ title, body }).show();
+});
+ipcMain.on("reload-app", () => {
+  if (mainWindow) {
+    mainWindow.reload(); // Reload the app window
+  }
 });

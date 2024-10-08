@@ -4,16 +4,17 @@ import React, { useEffect, useState } from "react";
 import Table from "./table";
 import { useSearchParams } from "next/navigation";
 
-const Page = ({ReadHistory,readSDcard,ClearHistory,loading}) => {
+const Page = ({ ReadHistory, readSDcard, ClearHistory, loading, ports }) => {
   const [page, setPage] = React.useState(0);
 
-  const [rowsPerPage, setRowsPerPage] = React.useState(25);
+  const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [searchQuery, setSearchQuery] = useState("");
   const [date, setDate] = useState(null);
- 
+
   return (
     <Grid container rowGap={2} sm={12} md={12}>
       <Table
+        ports={ports}
         data={readSDcard}
         ReadHistory={ReadHistory}
         ClearHistory={ClearHistory}
