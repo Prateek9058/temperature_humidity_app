@@ -65,6 +65,7 @@ const Graph = ({ serialData }) => {
 
         // Reset the chart after 2 minutes (120 seconds)
         if (updateCount.current >= 120) {
+          // Reset chart data and buffers
           setChartData({
             labels: [],
             datasets: [
@@ -89,7 +90,7 @@ const Graph = ({ serialData }) => {
           tempDataBuffer.current = [];
           humiDataBuffer.current = [];
           labelsBuffer.current = [];
-          updateCount.current = 0; // Reset update count
+          updateCount.current = 0; // Reset update count here
         }
       }
     }, 1000);

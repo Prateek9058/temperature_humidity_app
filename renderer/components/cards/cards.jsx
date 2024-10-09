@@ -5,6 +5,8 @@ import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
 import { FaRegTrashAlt } from "react-icons/fa";
 import CommanDialog from "../Dialog/index";
+import { MdOutlineAccessTime } from "react-icons/md";
+
 import {
   Avatar,
   FormControl,
@@ -15,6 +17,7 @@ import {
   Chip,
   IconButton,
   Tooltip,
+  InputAdornment,
 } from "@mui/material";
 import Graph from "./graph";
 import GraphSDCard from "./SdCardGraph";
@@ -23,7 +26,13 @@ import Thermometer from "../../public/images/thermometer1.svg";
 import low from "../../public/images/low.png";
 import Battery from "../../public/images/battery1.svg";
 import Humidity from "../../public/images/humidity1.svg";
-import { LocalizationProvider } from "@mui/x-date-pickers";
+import {
+  DesktopTimePicker,
+  LocalizationProvider,
+  MobileTimePicker,
+  StaticTimePicker,
+  TimePicker,
+} from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { TbPlugConnected } from "react-icons/tb";
@@ -31,11 +40,19 @@ import { PiPlugsConnectedBold } from "react-icons/pi";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
 
-const CardList = ({ data1, readSDcard, serialData, ReadHistory, ports,ClearHistory }) => {
+const CardList = ({
+  data1,
+  readSDcard,
+  serialData,
+  ReadHistory,
+  ports,
+  ClearHistory,
+}) => {
   const [filteredData, setFilteredData] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [open, setOpenDialog] = React.useState(false);
   const [selectedDataSource, setSelectedDataSource] = useState("live");
+  const [currentTime, setCurrentTime] = useState(dayjs("2022-04-17T15:30"));
   const currentDate = dayjs();
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -82,32 +99,6 @@ const CardList = ({ data1, readSDcard, serialData, ReadHistory, ports,ClearHisto
     }
   }, [startDate, readSDcard]);
 
-  const cardData = [
-    {
-      id: 1,
-      title: "Current Temperature",
-      value: `${data1?.Temp || 0} °C`,
-      icon: Thermometer,
-      color: "rgba(75,192,192,1)",
-      live: "#2D9CDB",
-    },
-    {
-      id: 2,
-      title: "Current Humidity",
-      value: `${data1?.Humi || 0} %`,
-      icon: Humidity,
-      color: "rgba(153,102,255,1)",
-      live: "#FFBFBF",
-    },
-    {
-      id: 3,
-      title: "Battery",
-      value: `${data1?.batt || 0} %`,
-      icon: Battery,
-      img: low,
-    },
-  ];
-
   const minDate = dayjs("2024-09-30");
   const handleData = (data, datatype) => {
     if (datatype == "startDate") {
@@ -144,135 +135,6 @@ const CardList = ({ data1, readSDcard, serialData, ReadHistory, ports,ClearHisto
         onConfirm={handleConfirm}
       />
       <Grid container spacing={2} padding={1}>
-        <Grid item xs={12}>
-          <Grid container spacing={2} wrap="wrap">
-            {cardData?.map((data) => (
-              <Grid item xs={12} sm={6} md={6} lg={4} key={data?.id}>
-                <Card>
-                  <CardContent>
-                    <Grid container alignItems="center" spacing={2}>
-                      <Grid item>
-                        {data?.title != "Battery" ? (
-                          <Avatar
-                            sx={{
-                              backgroundColor: "rgba(0, 176, 116, 0.15)",
-                              height: 70,
-                              width: 70,
-                            }}
-                          >
-                            <Image
-                              src={data?.icon}
-                              alt={data?.title}
-                              height={40}
-                              width={40}
-                            />
-                          </Avatar>
-                        ) : (
-                          <Avatar
-                            sx={{
-                              backgroundColor: "rgba(0, 176, 116, 0.15)",
-                              height: 70,
-                              width: 70,
-                            }}
-                          >
-                            <Image
-                              src={
-                                data?.value <= "35 %" ? data?.img : data?.icon
-                              }
-                              alt={data?.title}
-                              height={40}
-                              width={40}
-                            />
-                          </Avatar>
-                        )}
-                      </Grid>
-                      <Grid
-                        item
-                        xs
-                        display={"flex"}
-                        justifyContent={"space-between"}
-                        alignItems={"center"}
-                      >
-                        <Grid>
-                          <Typography variant="h6">{data?.title}</Typography>
-                          <Typography variant="body1" mt={1}>
-                            {data?.title !== "Battery" && (
-                              <Chip
-                                label={data?.value}
-                                //   variant={status === "Cleaned" ? "filled" : "filled"}
-
-                                sx={{
-                                  backgroundColor:
-                                    selectedDataSource == "live"
-                                      ? data?.color
-                                      : data?.live,
-                                  color:
-                                    data?.title == "Current Temperature"
-                                      ? "#fff"
-                                      : "#fff",
-                                  fontWeight: 700,
-                                  minWidth: 120,
-                                }}
-                              />
-                            )}
-                            {data?.title === "Battery" && (
-                              <Chip
-                                label={data?.value}
-                                //   variant={status === "Cleaned" ? "filled" : "filled"}
-
-                                sx={{
-                                  backgroundColor:
-                                    data?.value >= "35 %"
-                                      ? "#CCDEBF"
-                                      : "#FFBFBF",
-                                  color:
-                                    data?.value >= "35 %" ? "#347D00" : "#fff",
-                                  fontWeight: 700,
-                                  minWidth: 120,
-                                }}
-                              />
-                            )}
-                          </Typography>
-                        </Grid>
-                        {data?.title === "Battery" && (
-                          <>
-                            {ports && (
-                              <Grid>
-                                {ports.length !== 0 && (
-                                  <Grid
-                                    container
-                                    justifyContent={"flex-end"}
-                                    gap={2}
-                                  >
-                                    <Typography>Pluged in :</Typography>
-                                    <PiPlugsConnectedBold
-                                      color="green"
-                                      size={"22px"}
-                                    />
-                                  </Grid>
-                                )}
-                                {ports.length === 0 && (
-                                  <Grid container mt={2} gap={2}>
-                                    <Typography>Pluged out :</Typography>
-                                    <TbPlugConnected
-                                      color="red"
-                                      size={"25px"}
-                                    />
-                                  </Grid>
-                                )}
-                              </Grid>
-                            )}
-                          </>
-                        )}
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Grid>
-
         <Grid item xs={12} md={12}>
           <Grid
             container
@@ -282,8 +144,42 @@ const CardList = ({ data1, readSDcard, serialData, ReadHistory, ports,ClearHisto
           >
             <Grid container justifyContent={"space-between"} p={2}>
               <Grid>
-                <Typography variant="h5">Temperature & Humidity</Typography>
+                {selectedDataSource === "readHistory" ? (
+                  <Typography variant="h5">
+                    History Temperature & Humidity
+                  </Typography>
+                ) : (
+                  <Typography variant="h5">
+                    Current Temperature & Humidity
+                  </Typography>
+                )}
               </Grid>
+              {selectedDataSource === "live" && (
+                <Grid >
+                 
+                  <Chip
+                    label={`Temperature : ${data1?.Temp || 0} °C`}
+                    sx={{
+                      backgroundColor: "rgba(75,192,192,1)",
+                      color: "#fff",
+                      fontWeight: 700,
+                      minWidth: 120,
+                    }}
+                  />
+                 
+                  <Chip
+                    label={`Humidity : ${data1?.Humi || 0} %`}
+                    sx={{
+                      backgroundColor: "rgba(153,102,255,1)",
+                      color: "#fff",
+                      fontWeight: 700,
+                      minWidth: 120,
+                      height: 35,
+                      ml: 2,
+                    }}
+                  />
+                </Grid>
+              )}
               <Grid>
                 <FormControl sx={{ mr: 1, ml: 1, minWidth: 200 }}>
                   <InputLabel id="data-source-select-label">
@@ -339,6 +235,9 @@ const CardList = ({ data1, readSDcard, serialData, ReadHistory, ports,ClearHisto
                         <FaRegTrashAlt fontSize={"25px"} color="red" />
                       </IconButton>
                     </Tooltip>
+                    {/* <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <MobileTimePicker defaultValue={currentTime} />
+                    </LocalizationProvider> */}
                   </>
                 )}{" "}
               </Grid>

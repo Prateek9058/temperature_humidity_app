@@ -84,6 +84,7 @@ const index = ({
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     maxWidth: "200px", // Adjust max width as needed
+                    fontWeight:500
                   }}
                 >
                   {!Array.isArray(ele) ? (

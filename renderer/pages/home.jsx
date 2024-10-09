@@ -6,13 +6,21 @@ import {
   FormControl,
   InputLabel,
   Typography,
+  Avatar,
 } from "@mui/material";
 import CardContent from "../components/cards/cards";
 import CustomTableContent from "../components/table/index";
 import { ThemeProvider } from "@emotion/react";
 import { baselightTheme } from "../utils/theme/DefaultColors";
 import CssBaseline from "@mui/material/CssBaseline";
+import Battery from "../public/images/battery1.svg";
+import { FaUsb } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
+import { FaBatteryThreeQuarters, FaMicrochip } from "react-icons/fa";
+import { FaBatteryHalf } from "react-icons/fa6";
+import { FaBatteryFull } from "react-icons/fa";
+import { FaBatteryEmpty } from "react-icons/fa";
+
 import Logo from "../public/images/HAL-logo 1.png";
 import "react-toastify/dist/ReactToastify.css";
 import Image from "next/image";
@@ -28,7 +36,7 @@ const Index = () => {
   const [readSDcard, setReadSDcard] = useState([]);
   const [checkData, setDatacheck] = useState(true);
   const [noDataWarning, setNoDataWarning] = useState(false);
-  const [message, setMessage] = useState(''); // State to hold the incoming message
+  const [message, setMessage] = useState(""); // State to hold the incoming message
 
   const handleChangeComp = async (event, path) => {
     if (event) {
@@ -45,11 +53,9 @@ const Index = () => {
   const [currentPort, setCurrentPort] = useState(null);
   let timeoutId;
   useEffect(() => {
-   
-
     const listener = (message) => {
       console.log("resssss==============>", message);
-      setMessage(message); 
+      setMessage(message);
 
       clearTimeout(timeoutId);
 
@@ -57,7 +63,7 @@ const Index = () => {
 
       timeoutId = setInterval(() => {
         fetchPorts();
-        setMessage('');
+        setMessage("");
       }, 5000);
     };
 
@@ -65,7 +71,7 @@ const Index = () => {
 
     return () => {
       clearInterval(timeoutId);
-      window.ipc.removeListener("checkData1", listener);
+      // window.ipc.removeListener("checkData1", listener);
     };
   }, []);
 
@@ -343,80 +349,135 @@ const Index = () => {
               HAL-Temperature-Humidity
             </Typography>
           </Grid>
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid
+            item
+            xs={12}
+            sm={6}
+            md={4}
+            display={"flex"}
+            alignItems={"center"}
+          >
             {ports?.length > 0 && (
-              <FormControl fullWidth>
-                <InputLabel
-                  id="demo-simple-select-label"
-                  sx={{
-                    color: "#fff",
-                    "&.Mui-focused": {
-                      color: "#000",
-                    },
-                  }}
-                >
-                  Select Com Port
-                </InputLabel>
-                <Select
-                  label="Select Com Port"
-                  InputLabelProps={{ shrink: true }}
-                  value={selectComp || ports[0]?.friendlyName}
-                  onChange={(e) => {
-                    handleChangeComp(e.target.value);
-                  }}
-                  sx={{
-                    color: "#fff",
-                    "& .MuiSelect-icon": {
+              <>
+                <FormControl fullWidth>
+                  <InputLabel
+                    id="demo-simple-select-label"
+                    sx={{
                       color: "#fff",
-                    },
-                  }}
-                  onOpen={fetchPorts}
-                >
-                  {ports &&
-                    ports?.map((item, index) => (
-                      <MenuItem key={index} value={item?.path}>
-                        {item?.friendlyName}
-                      </MenuItem>
-                    ))}
-                </Select>
-              </FormControl>
+                      "&.Mui-focused": {
+                        color: "#000",
+                      },
+                    }}
+                  >
+                    Select Com Port
+                  </InputLabel>
+                  <Select
+                    label="Select Com Port"
+                    InputLabelProps={{ shrink: true }}
+                    value={selectComp || ports[0]?.friendlyName}
+                    onChange={(e) => {
+                      handleChangeComp(e.target.value);
+                    }}
+                    sx={{
+                      color: "#fff",
+                      "& .MuiSelect-icon": {
+                        color: "#fff",
+                      },
+                    }}
+                    renderValue={(selected) => (
+                      <div style={{ display: "flex", alignItems: "center",  }}>
+                        <div style={{marginRight:"10px"}}>
+                        <FaUsb size={"25px"} />
+                        </div>
+                      
+                        {
+                          ports.find((item) => item.path === selected)
+                            ?.friendlyName
+                        }
+                      </div>
+                    )}
+                    onOpen={fetchPorts}
+                  >
+                    {ports &&
+                      ports?.map((item, index) => (
+                        <MenuItem key={index} value={item?.path}>
+                          {item?.friendlyName}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+                <Grid item display="flex" alignItems="center">
+                  <Typography
+                    sx={{ mr: 1, ml: 1, fontWeight: 700, color: "#fff" }}
+                    variant="h6"
+                  >
+                    {`${serialData?.batt || 0}`}%
+                  </Typography>
+                  {serialData?.batt >= 75 ? (
+                    <FaBatteryFull size="45px" color="green" />
+                  ) : serialData?.batt >= 50 ? (
+                    <FaBatteryThreeQuarters size="45px" color="orange" />
+                  ) : serialData?.batt >= 25 ? (
+                    <FaBatteryHalf size="45px" color="yellow" />
+                  ) : (
+                    <FaBatteryEmpty size="45px" color="red" />
+                  )}
+                </Grid>
+              </>
             )}
             {ports?.length === 0 && (
-              <FormControl fullWidth>
-                <InputLabel
-                  id="demo-simple-select-label"
-                  sx={{
-                    color: "#fff",
-                    "&.Mui-focused": {
-                      color: "#000",
-                    },
-                  }}
-                >
-                  Select Com Port
-                </InputLabel>
-                <Select
-                  label="Select Com Port"
-                  InputLabelProps={{ shrink: true }}
-                  value={selectComp}
-                  onChange={(e) => {
-                    handleChangeComp(e.target.value);
-                  }}
-                  sx={{
-                    color: "#fff",
-                    "& .MuiSelect-icon": {
+              <>
+                {/* <FormControl fullWidth sx={{ mr: 1 }}>
+                  <InputLabel
+                    id="demo-simple-select-label"
+                    sx={{
                       color: "#fff",
-                    },
-                  }}
-                  onOpen={fetchPorts}
-                >
-                  {ports &&
-                    ports?.map((item, index) => (
-                      <MenuItem key={index} value={item?.path}>
-                        {item?.friendlyName}
-                      </MenuItem>
-                    ))}
-                </Select>
-              </FormControl>
+                      "&.Mui-focused": {
+                        color: "#000",
+                      },
+                    }}
+                  >
+                    Select Com Port
+                  </InputLabel>
+                  <Select
+                    label="Select Com Port"
+                    InputLabelProps={{ shrink: true }}
+                    value={selectComp}
+                    onChange={(e) => {
+                      handleChangeComp(e.target.value);
+                    }}
+                    sx={{
+                      color: "#fff",
+                      "& .MuiSelect-icon": {
+                        color: "#fff",
+                      },
+                    }}
+                    onOpen={fetchPorts}
+                  >
+                    {ports &&
+                      ports?.map((item, index) => (
+                        <MenuItem key={index} value={item?.path}>
+                          {item?.friendlyName}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+                <Grid item display="flex" alignItems="center">
+                  <Typography sx={{ mr: 1 }} variant="h6">
+                    {`${serialData?.batt || 0}`}%
+                  </Typography>
+                  {serialData?.batt >= 75 ? (
+                    <FaBatteryFull size="45px" color="green" />
+                  ) : serialData?.batt >= 50 ? (
+                    <FaBatteryThreeQuarters size="45px" color="orange" />
+                  ) : serialData?.batt >= 25 ? (
+                    <FaBatteryHalf size="45px" color="yellow" />
+                  ) : (
+                    <FaBatteryEmpty size="45px" color="red" />
+                  )}
+                </Grid> */}
+                ""
+              </>
             )}
           </Grid>
         </Grid>

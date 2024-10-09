@@ -91,8 +91,8 @@ const Table = ({
       sx={{
         backgroundColor: "#2D9CDB",
         color: "#fff",
-        fontWeight: 700,
-        minWidth: 120,
+        fontWeight: 600,
+     
       }}
     />
   );
@@ -102,8 +102,8 @@ const Table = ({
       sx={{
         backgroundColor: "#FFBFBF",
         color: "red",
-        fontWeight: 700,
-        minWidth: 120,
+        fontWeight: 600,
+        
       }}
     />
   );
@@ -192,7 +192,7 @@ const Table = ({
       >
         <Grid item>
           <Typography variant="h5">
-            Temperature and Humidity history{" "}
+            Temperature and Humidity History{" "}
           </Typography>
         </Grid>
         <Grid item className="customSearch">
