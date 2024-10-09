@@ -112,9 +112,9 @@ const Table = ({
     return data?.map((item, index) => ({
       sr: index + 1,
       date: item.d ? item.d : "--",
-      time: item?.t ? dayjs(item.t, "HH:mm:ss").format("LTS") : "--",
-      Temp: item?.Temp ? renderPowerStatus(`${item.Temp} °C`) : "--",
-      Humi: item?.Humi ? renderPowerStatus1(`${item.Humi} %`) : "--",
+      time: item?.t ? dayjs(item?.t, "h:mm:ss").format("LTS") : "--",
+      Temp: item?.Temp ? renderPowerStatus(`${item?.Temp} °C`) : "--",
+      Humi: item?.Humi ? renderPowerStatus1(`${item?.Humi} %`) : "--",
     }));
   };
   const handleExport = (data) => {
@@ -210,7 +210,7 @@ const Table = ({
               </Button>
             </Grid>
 
-            <Grid item>
+            {/* <Grid item>
               <Button variant="contained" onClick={handleOpenDownload}>
                 Read history
               </Button>
@@ -223,7 +223,7 @@ const Table = ({
               >
                 Clear history
               </Button>
-            </Grid>
+            </Grid> */}
           </Grid>
         </Grid>
       </Grid>

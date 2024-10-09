@@ -26,6 +26,9 @@ const Index = () => {
   const [isDisConnected, setIsDisConnected] = useState(false);
   const [loading, setLoading] = useState(false);
   const [readSDcard, setReadSDcard] = useState([]);
+  const [checkData, setDatacheck] = useState(true);
+  const [noDataWarning, setNoDataWarning] = useState(false);
+  const [message, setMessage] = useState(''); // State to hold the incoming message
 
   const handleChangeComp = async (event, path) => {
     if (event) {
@@ -40,6 +43,31 @@ const Index = () => {
     }
   };
   const [currentPort, setCurrentPort] = useState(null);
+  let timeoutId;
+  useEffect(() => {
+   
+
+    const listener = (message) => {
+      console.log("resssss==============>", message);
+      setMessage(message); 
+
+      clearTimeout(timeoutId);
+
+      fetchPorts();
+
+      timeoutId = setInterval(() => {
+        fetchPorts();
+        setMessage('');
+      }, 5000);
+    };
+
+    window.ipc.checkData1(listener);
+
+    return () => {
+      clearInterval(timeoutId);
+      window.ipc.removeListener("checkData1", listener);
+    };
+  }, []);
 
   const fetchPorts = async () => {
     try {
@@ -47,7 +75,7 @@ const Index = () => {
       console.log("Response from fetchPorts:", response);
       if (response.length === 0) {
         toast.info(
-          "Port disconnected. Waiting for 5 seconds before establishing the connection..."
+          "Disconnected from port. After connect port Wait for 5 seconds to reconnect..."
         );
       }
       if (response.length > 0) {
@@ -84,20 +112,18 @@ const Index = () => {
   };
 
   useEffect(() => {
-    const initializePorts = async () => {
-      await AutoConnected();
-      await fetchPorts();
-    };
-    initializePorts();
-    const interval = setInterval(fetchPorts, 5000);
-    return () => clearInterval(interval);
+    // Call the function immediately
+    AutoConnected();
   }, []);
 
   const AutoConnected = async () => {
     try {
       const response = await window.ipc.listPorts("list-ports");
+
       if (response.length > 0) {
         const portToConnect = response[0]?.path;
+        setSelectComp(portToConnect);
+        setPorts(response);
         if (
           currentPort &&
           currentPort.isOpen &&
@@ -106,6 +132,7 @@ const Index = () => {
           console.log(
             `Current port ${currentPort.path} is already open. No action needed.`
           );
+
           return;
         }
 
@@ -147,6 +174,12 @@ const Index = () => {
               const parsedData = JSON.parse(data);
               console.log("Received serial data:", parsedData);
               setSerialData(parsedData);
+              if (Object.keys(parsedData).length > 0) {
+                setDatacheck(true);
+                console.log();
+              } else {
+                setDatacheck(false);
+              }
             } catch (error) {
               console.error("Failed to parse JSON data:", error);
             }
@@ -173,9 +206,13 @@ const Index = () => {
         path: path1,
         baudRate,
       });
+
+      console.log("responsdgdfgdfgfse==================>", result);
+
       if (result === true) {
         console.log("Port opened successfully");
         toast.success(`Port opened successfully at ${path1}`);
+        clearInterval(timeoutId);
         setIsConnected(true);
         setIsDisConnected(true);
         window?.ipc?.onSerialData((data) => {
@@ -345,42 +382,41 @@ const Index = () => {
               </FormControl>
             )}
             {ports?.length === 0 && (
-              // <FormControl fullWidth>
-              //   <InputLabel
-              //     id="demo-simple-select-label"
-              //     sx={{
-              //       color: "#fff",
-              //       "&.Mui-focused": {
-              //         color: "#000",
-              //       },
-              //     }}
-              //   >
-              //     Select Com Port
-              //   </InputLabel>
-              //   <Select
-              //     label="Select Com Port"
-              //     InputLabelProps={{ shrink: true }}
-              //     value={selectComp}
-              //     onChange={(e) => {
-              //       handleChangeComp(e.target.value);
-              //     }}
-              //     sx={{
-              //       color: "#fff",
-              //       "& .MuiSelect-icon": {
-              //         color: "#fff",
-              //       },
-              //     }}
-              //     onOpen={fetchPorts}
-              //   >
-              //     {ports &&
-              //       ports?.map((item, index) => (
-              //         <MenuItem key={index} value={item?.path}>
-              //           {item?.friendlyName}
-              //         </MenuItem>
-              //       ))}
-              //   </Select>
-              // </FormControl>
-              ""
+              <FormControl fullWidth>
+                <InputLabel
+                  id="demo-simple-select-label"
+                  sx={{
+                    color: "#fff",
+                    "&.Mui-focused": {
+                      color: "#000",
+                    },
+                  }}
+                >
+                  Select Com Port
+                </InputLabel>
+                <Select
+                  label="Select Com Port"
+                  InputLabelProps={{ shrink: true }}
+                  value={selectComp}
+                  onChange={(e) => {
+                    handleChangeComp(e.target.value);
+                  }}
+                  sx={{
+                    color: "#fff",
+                    "& .MuiSelect-icon": {
+                      color: "#fff",
+                    },
+                  }}
+                  onOpen={fetchPorts}
+                >
+                  {ports &&
+                    ports?.map((item, index) => (
+                      <MenuItem key={index} value={item?.path}>
+                        {item?.friendlyName}
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
             )}
           </Grid>
         </Grid>
@@ -390,6 +426,7 @@ const Index = () => {
             data1={serialData}
             readSDcard={readSDcard}
             serialData={serialData}
+            ClearHistory={ClearHistory}
             ports={ports}
           />
           <CustomTableContent

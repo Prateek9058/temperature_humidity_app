@@ -1,10 +1,20 @@
 import path from "path";
-import { app, ipcMain, Notification, Menu, dialog, shell } from "electron";
+import {
+  app,
+  ipcMain,
+  Notification,
+  Menu,
+  dialog,
+  shell,
+  webContents,
+} from "electron";
 import serve from "electron-serve";
 import { createWindow } from "./helpers";
 import { SerialPort } from "serialport";
 import fs from "fs";
 import Store from "electron-store";
+import { log } from "console";
+import { send } from "process";
 
 const isProd = process.env.NODE_ENV === "production";
 let port;
@@ -125,9 +135,20 @@ ipcMain.handle("open-port", async (event, config) => {
         }
       });
     });
+    let timeoutId;
+    const startDataTimeout = (msg) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        mainWindow.webContents.send("check-data", msg);
+        console.log(msg);
+      }, 5000);
+    };
 
     // Handle incoming data for open-port
+
     port.on("data", (data) => {
+      let validDataReceived = false;
+      let segmentLength;
       dataBuffer += data.toString();
       let startIndex = 0;
       while (startIndex < dataBuffer.length) {
@@ -142,9 +163,21 @@ ipcMain.handle("open-port", async (event, config) => {
         );
         startIndex = closeBraceIndex + 1;
         mainWindow.webContents.send("serial-data", segment);
+        clearTimeout(timeoutId);
         console.log("Processed segment length:", segment.length);
         console.log("Valid segment:", segment);
+        segmentLength = segment.length;
       }
+
+      if (!validDataReceived) {
+        const msg = "No data received from COM port within 10 seconds";
+        startDataTimeout(msg);
+      }
+      if (segmentLength == 0) {
+        const msg = "data received";
+        startDataTimeout(msg);
+      }
+
       dataBuffer = dataBuffer.substring(startIndex);
       if (dataBuffer.length > 0) {
         console.log("Remaining buffer length:", dataBuffer.length);

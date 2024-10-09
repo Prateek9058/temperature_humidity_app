@@ -22,8 +22,14 @@ const handler = {
   },
   offSerialData() {
     // Unregister the callback
-    ipcRenderer.removeAllListeners('serial-data');
-},
+    ipcRenderer.removeAllListeners("serial-data");
+  },
+  checkData1: (callback) => {
+    ipcRenderer.on("check-data", (event, message) => {
+      callback(message); // Call the provided callback with the received message
+    });
+  },
+
   onReceivingSD_Data(callback) {
     ipcRenderer.on("Read-SD-data", (event, data) => callback(data));
     return () => ipcRenderer.removeListener("Read-SD-data", callback);
